@@ -1,20 +1,34 @@
+Shit to do
+
+Story 1 :   Restrict projects based on word in title/description
+
+Story 2 :
+
+Story 3 :   Non empty Password
+            Unique/valid email address
+            Unique username
+            Log on automatically.
+
+
+
 <template>
     <div>
 
             <div class="container">
+
                 <nav class="navbar fixed-top navbar-toggleable-md navbar-light bg-white">
 
-                    <a class="navbar-brand" href="http://localhost:8080">Crowd Funding Website</a>
+                    <a class="navbar-brand" href="http://localhost:8080">Crowderino Funderino</a>
 
                     <div v-if="token==''">
-                        <button type="button" class="btn btn-primary" data-toggle="modal"
-                                data-target="#logInModal">
+                        <button type="button" class="btn text-left btn-primary" data-toggle="modal"
+                                data-target="#logInModal" style="float: left;">
                              Log In
                         </button>
                     </div>
 
                     <div v-else>
-                        <button type="button" class="btn btn-primary" v-on:click="logOut()" data-toggle="modal">
+                        <button type="button" class="btn text-left btn-primary" v-on:click="logOut()" data-toggle="modal">
                             Log Out
                         </button>
                     </div>
@@ -107,7 +121,7 @@
 
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" v-on:click="logInUser()" data-dismiss="modal">Log</button>
+                                <button type="button" class="btn btn-secondary" v-on:click="logInUser()" data-dismiss="modal">Log In</button>
                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">
                                     Close
                                 </button>
@@ -118,16 +132,17 @@
 
 
                 <div class="modal fade" id="showProjectModal" tabindex="-1" role="dialog"
-                     aria-labelledby="signUpModal" aria-hidden="true" width="100%" minWidth="900">
+                     aria-labelledby="signUpModal" aria-hidden="true">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-body">
                                     <div id = "project">
                                         <h1>{{currentProject.title}}</h1>
-                                        <b-img center rounded :src="'http://localhost:4942/api/v2' + currentProject.imageUri" alt="Responsive image" class="Image" maxWidth="500"/>
+                                        <b-img center rounded :src="'http://localhost:4942/api/v2' + currentProject.imageUri" alt="Responsive image" fluid-grow class="Image"/>
                                         <h4>{{currentProject.subtitle}}</h4>
                                         <p> Creation Date {{getCurrentProjectDate()}}<br /> Creators : {{currentProject.creators[0].username}} <br /> Target: {{currentProject.target}}</p>
                                         <p>{{currentProject.description}}</p>
+                                        <p>Progress: {{totalDonations}}/{{currentProject.target}} <br /> Total Backers: {{totalBackers}}</p>
                                         <table style="border: 2px solid black">
                                             <tr style="border: 2px solid black">
                                                 <th>Reward</th>
@@ -136,22 +151,51 @@
 
                                             <tr v-for="reward in currentProject.rewards" style="border: 1px solid black">
                                                 <td>{{reward.description}}</td>
-                                                <td>{{reward.amount}}</td>
+                                                <td>{{reward.amount/100}}</td>
+                                            </tr>
+                                        </table>
+                                        <div v-if="token==''">
+                                            <h4>Log in to pledge!</h4>
+                                        </div>
+                                        <div v-else>
+
+                                            <b-row class="my-1">
+                                                <b-col sm="2"><button type="button" class="btn btn-primary" v-on:click="pledgeToProject(pledgeValue)" data-dismiss="modal" data-toggle="modal"
+                                                                      data-target="#successfulDonationModal">
+                                                    Pledge
+                                                </button></b-col>
+                                                <b-col sm="5">
+                                                    <b-form-input id="input-small" size="sm" type="number" placeholder="5.00" v-model="pledgeValue" required></b-form-input>
+                                                </b-col>
+                                                <b-col sm="5">
+                                                    <b-form-checkbox id="checkbox1"
+                                                                     v-model="anonymousDonation"
+                                                                     value="true"
+                                                                     unchecked-value="false">
+                                                       Anonymous Pledge
+                                                    </b-form-checkbox>
+                                                </b-col>
+                                            </b-row>
+
+                                        </div>
+                                        <table style="border: 2px solid black; margin:auto">
+                                            <tr style="border: 2px solid black">
+                                                <th>Backer</th>
+                                                <th>Amount</th>
+                                            </tr>
+
+                                            <tr v-for="backer in mostRecentBackers" style="border: 1px solid black">
+                                                <td>{{backer.username}}</td>
+                                                <td>{{backer.amount}}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Anonymous</th>
+                                                <td>{{anonymousDonations}}</td>
                                             </tr>
                                         </table>
 
-                                        <!---------------------BACKER TABLE TO IMPLEMENT-------------------------->
-                                        <!--<table style="border: 2px solid black">-->
-                                            <!--<tr style="border: 2px solid black">-->
-                                                <!--<th>Backer</th>-->
-                                                <!--<th>Amount</th>-->
-                                            <!--</tr>-->
 
-                                            <!--<tr v-for="backer in currentProject.backers" style="border: 1px solid black">-->
-                                                <!--<td>{{backer.}}</td>-->
-                                                <!--<td>{{reward.amount}}</td>-->
-                                            <!--</tr>-->
-                                        <!--</table>-->
+
                                     </div>
 
                             </div>
@@ -165,25 +209,47 @@
                 </div>
             </div>
 
+        <div class="modal fade" id="successfulDonationModal" tabindex="-1" role="dialog"
+             aria-labelledby="signUpModal" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class = "modal-title" id="successfulDonationLabel">Log in to your account</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <h2>Successful Donation! Thank you for contributing </h2>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            Back Home
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 
-            <div v-if="errorFlag" style="color: red;">
+
+        <div v-if="errorFlag" style="color: red;">
                 {{ error }}
             </div>
 
 
             <div v-else>
                 <div id="users">
-                    <b-img src="https://lorempixel.com/1024/400/" fluid alt="Responsive image" />
-                        <div class="card-columns">
-                            <div class="col-lg-6">
+                    <!--<b-img src="https://lorempixel.com/1024/400/" fluid-grow alt="Responsive image" />-->
+                    <b-container>
+                        <b-card-group columns>
                             <div v-for="project in projects">
 
                                         <b-card :header="project.title"
                                                 header-text-variant="dark"
                                                 :img-src="'http://localhost:4942/api/v2' + project.imageUri"
                                                 img-alt="Image"
-                                                img-top
+                                                img-fluid
                                                 tag="article"
                                                 style="max-width: 25rem;"
                                                 class="mb-2"
@@ -204,8 +270,9 @@
 
 
                                         </b-card>
-                                    </div>
                             </div>
+                        </b-card-group>
+                        </b-container>
                         </div>
                     <b-button  variant="dark" @click="test" >test</b-button>
 
@@ -224,6 +291,12 @@
                 currentProject: {creators:[{username: ''}, ], rewards:[{description: '', amount: ''}]},
                 currentId: "",
                 token: '',
+                anonymousDonations: 0,
+                totalDonations:0,
+                totalBackers:0,
+                mostRecentBackers: [],
+                pledgeValue: '',
+                anonymousDonation: "false",
                 signUpForm: {
                     email: '',
                     username: '',
@@ -240,9 +313,10 @@
         mounted: function() {
             this.getProjects();
         },
+
         methods: {
             getProjects: function(){
-                this.$http.get('http://localhost:4942/api/v2/projects/')
+                this.$http.get('http://localhost:4942/api/v2/projects?open=true')
                     .then(function(response){
                         this.projects = response.data;
                     }, function(error) {
@@ -263,11 +337,21 @@
                         "location": this.signUpForm.location
                     })
                         .then(function (response) {
-                            console.log(response)
+                            this.$http.post('http://localhost:4942/api/v2/users/login?email=' + this.signUpForm.email +'&password=' + this.signUpForm.password, {
+                            })
+                                .then(function (response2) {
+                                    this.token = response2.body.token;
+                                    this.currentUserId = response2.body.id;
+
+                                }, function (error) {
+                                    this.error = error;
+                                });
                         }, function (error) {
                             this.error = error;
                             this.errorFlag = true;
                         });
+
+
                 }
             },
             logInUser: function(){
@@ -276,6 +360,7 @@
                     })
                         .then(function (response) {
                             this.token = response.body.token;
+                            this.currentUserId = response.body.id;
 
                         }, function (error) {
                             this.error = error;
@@ -290,6 +375,7 @@
                         .then(function (response) {
                             console.log(response)
                             this.token = response.body.token;
+                            this.currentUserId = response.body.id;
                         }, function (error) {
                             this.error = error;
                         });
@@ -314,13 +400,6 @@
                         });
                 }
             },
-            test: function () {
-                console.log(this.currentProject);
-                console.log("token", this.token);
-
-            },
-
-
             getSingleProject: function(id){
                 console.log(id);
                 this.currentId = id;
@@ -328,10 +407,62 @@
                     .then((response) => {
 
                         this.currentProject = response.data;
+                        var count = 0;
+                        this.mostRecentBackers = [];
+                        this.anonymousDonations = 0;
+                        for(var i =0; i < this.currentProject.backers.length; i++){
+                            this.totalDonations += this.currentProject.backers[i].amount;
+                            this.totalBackers +=1 ;
+                            if(this.currentProject.backers[i].username == 'anonymous') {
+                                this.anonymousDonations += this.currentProject.backers[i].amount;
+                            }
+                            else if (count < 5){
+                                this.mostRecentBackers.push(this.currentProject.backers[i]);
+                                count++;
+                            }
+                        }
                     }, (error) => {
                         this.error = error;
                         this.errorFlag = true;
                     });
+
+
+
+
+            },
+
+            pledgeToProject: function(amount){
+                let anonymous = '';
+                if(this.anonymousDonation == "true"){anonymous = true;}
+                else{anonymous = false;}
+                if(false){
+
+                }
+                else
+                {
+                    console.log(this.currentProject.id)
+                    this.$http.post('http://localhost:4942/api/v2/projects/' + this.currentProject.id + '/pledge', {
+                        "id": this.currentUserId,
+                        "amount": parseInt(amount),
+                        "anonymous": anonymous,
+                        "card": {
+                            "authToken": "Thisdoesntevenmatter"
+                        }
+                    },{
+                        headers: {'X-Authorization': this.token}
+                    })
+                        .then(function (response) {
+                            console.log(response)
+                        }, function (error) {
+                            this.error = error;
+                        });
+                }
+            },
+
+            test: function () {
+                console.log(this.currentProject);
+                console.log("token", this.token);
+
             },
 
 
