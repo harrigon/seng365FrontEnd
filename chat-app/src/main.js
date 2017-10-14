@@ -20,18 +20,8 @@ const routes = [
         component: Home
     },
     {
-        path: "/users/:userId",
-        name: "user",
-        component: Users
-    },
-    {
-        path: "/:projectId",
-        name: "project",
-        component: Home
-    },
-    {
-        path: "/users",
-        name: "users",
+        path: "/myProjects",
+        name: "myProjects",
         component: Users
     }
 ];
