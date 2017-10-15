@@ -34,12 +34,25 @@ Apparently create a project changes didnt fucking save
                         <button type="button" class="btn text-left btn-primary" v-on:click="logOut()" data-toggle="modal">
                             Log Out
                         </button>
-                        <button type="button" class="btn text-left btn-primary"  href="http://localhost:8080/myProjects" data-toggle="modal">
-                            My Projects
-                        </button>
                         <button type="button" class="btn text-left btn-primary" data-toggle="modal" data-target="#projectCreationModal">
                             Create a Project
                         </button>
+
+                        <b-dropdown id="ddown1" text="Refine Projects" variant="primary" class="m-md-2">
+                            <b-dropdown-item aria-describedby="All Projects" v-on:click="getProjects()">All Projects</b-dropdown-item>
+                            <b-dropdown-item aria-describedby="Projects I Back" v-on:click="getMyBackedProjects()" >Backed Projects</b-dropdown-item>
+                            <b-dropdown-item aria-describedby="Projects I Back" v-on:click="getMyCreatedProjects()" >Created Projects</b-dropdown-item>
+                        </b-dropdown>
+
+                        <!--<button type="button" class="btn text-left btn-primary"  v-on:click="getProjects()" data-toggle="modal">-->
+                            <!--All Projects-->
+                        <!--</button>-->
+                        <!--<button type="button" class="btn text-left btn-primary"  v-on:click="getMyBackedProjects()" data-toggle="modal">-->
+                            <!--My Projects-->
+                        <!--</button>-->
+                        <!---->
+
+
                     </div>
 
                     <button type="button" class="btn btn-primary" data-toggle="modal"
@@ -153,7 +166,7 @@ Apparently create a project changes didnt fucking save
                             <div class="modal-body">
                                 <div id = "project">
                                     <h1>{{currentProject.title}}</h1>
-                                    <b-img center rounded :src="'http://csse-s365.canterbury.ac.nz:4851/api/v2' + currentProject.imageUri" alt="Responsive image" fluid-grow class="Image"/>
+                                    <b-img center rounded :src="'http://localhost:4942/api/v2' + currentProject.imageUri" alt="Responsive image" fluid-grow class="Image"/>
                                     <h4>{{currentProject.subtitle}}</h4>
                                     <p> Creation Date {{getCurrentProjectDate()}}<br /> Creators : {{currentProject.creators[0].username}} <br /> Target: {{currentProject.target}}</p>
                                     <p>{{currentProject.description}}</p>
@@ -356,7 +369,7 @@ Apparently create a project changes didnt fucking save
 
                                     <b-card :header="project.title"
                                             header-text-variant="dark"
-                                            :img-src="'http://csse-s365.canterbury.ac.nz:4851/api/v2' + project.imageUri"
+                                            :img-src="'http://localhost:4942/api/v2' + project.imageUri"
                                             img-alt="Image"
                                             img-fluid
                                             tag="article"
@@ -433,7 +446,7 @@ Apparently create a project changes didnt fucking save
 
         methods: {
             getProjects: function(){
-                this.$http.get('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects?open=true')
+                this.$http.get('http://localhost:4942/api/v2/projects?open=true')
                     .then(function(response){
                         this.projects = response.data;
                     }, function(error) {
@@ -442,7 +455,7 @@ Apparently create a project changes didnt fucking save
                     });
             },
             searchProjects: function(){
-                this.$http.get('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects?open=true')
+                this.$http.get('http://localhost:4942/api/v2/projects?open=true')
                     .then(function(response){
                         this.projects = [];
                         for(var i = 0; i <response.data.length; i++){
@@ -457,20 +470,83 @@ Apparently create a project changes didnt fucking save
                         this.errorFlag = true;
                     });
             },
+            getMyBackedProjects: function(){
+                this.$http.get('http://localhost:4942/api/v2/projects?open=true')
+                    .then(function(response){
+                        this.projects = response.data;
+                var allProjects = this.projects;
+                this.projects = [];
+                for(var i = 0; i < allProjects.length; i++){
+                    console.log("call");
+                    this.$http.get('http://localhost:4942/api/v2/projects/' + allProjects[i].id)
+                        .then((response) => {
+                        console.log(response.data.backers);
+                        var tempProject = response.data;
+                            for(var j =0; j < tempProject.backers.length; j++){
+                                console.log('final');
+                                console.log(tempProject.backers[j].id, this.currentUserId);
+                                if(tempProject.backers[j].id == this.currentUserId) {
+                                    this.projects.push(tempProject);
+                                    console.log("PUSHED")
+                                }
+                            }
+                        }, (error) => {
+                            this.error = error;
+                            this.errorFlag = true;
+                        });
+                }
+                    }, function(error) {
+                        this.error = error;
+                        this.errorFlag = true;
+                    });
+            },
+            getMyCreatedProjects: function(){
+                this.$http.get('http://localhost:4942/api/v2/projects?open=true')
+                    .then(function(response){
+                            this.projects = response.data;
+                var allProjects = this.projects;
+                this.projects = [];
+                for(var i = 0; i < allProjects.length; i++){
+                    console.log("call");
+                    this.$http.get('http://localhost:4942/api/v2/projects/' + allProjects[i].id)
+                        .then((response) => {
+                            console.log(response.data.backers);
+                            var tempProject = response.data;
+                            for(var j =0; j < tempProject.creators.length; j++){
+                                console.log('final');
+                                console.log(tempProject.creators[j].id, this.currentUserId);
+                                if(tempProject.creators[j].id == this.currentUserId) {
+                                    this.projects.push(tempProject);
+                                    console.log("PUSHED")
+                                }
+                            }
+                        }, (error) => {
+                            this.error = error;
+                            this.errorFlag = true;
+                        });
+                }
+
+                    }, function(error) {
+                        this.error = error;
+                        this.errorFlag = true;
+                    });
+            },
+
             createUser: function(){
                 if(false){
 
                 }
                 else
                 {
-                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/', {
+                    console.log("yo");
+                    this.$http.post('http://localhost:4942/api/v2/users/', {
                         "username": this.signUpForm.username,
                         "email": this.signUpForm.email,
                         "password": this.signUpForm.password,
                         "location": this.signUpForm.location
                     })
                         .then(function (response) {
-                            this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/login?email=' + this.signUpForm.email +'&password=' + this.signUpForm.password, {
+                            this.$http.post('http://localhost:4942/api/v2/users/login?email=' + this.signUpForm.email +'&password=' + this.signUpForm.password, {
                             })
                                 .then(function (response2) {
                                     this.token = response2.body.token;
@@ -493,7 +569,7 @@ Apparently create a project changes didnt fucking save
                 }
                 else
                 {
-                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/', {
+                    this.$http.post('http://localhost:4942/api/v2/projects/', {
                         "title": this.projectCreationForm.title,
                         "description": this.projectCreationForm.description,
                         "subtitle": this.projectCreationForm.subtitle,
@@ -527,7 +603,7 @@ Apparently create a project changes didnt fucking save
             },
             logInUser: function(){
                 if(this.logInForm.username == ''){
-                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/login?email=' + this.logInForm.email +'&password=' + this.logInForm.password, {
+                    this.$http.post('http://localhost:4942/api/v2/users/login?email=' + this.logInForm.email +'&password=' + this.logInForm.password, {
                     })
                         .then(function (response) {
                             this.token = response.body.token;
@@ -541,7 +617,7 @@ Apparently create a project changes didnt fucking save
                 }
                 else
                 {
-                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/login?username=' + this.logInForm.username +'&password=' + this.logInForm.password, {
+                    this.$http.post('http://localhost:4942/api/v2/users/login?username=' + this.logInForm.username +'&password=' + this.logInForm.password, {
                     })
                         .then(function (response) {
                             console.log(response)
@@ -560,7 +636,7 @@ Apparently create a project changes didnt fucking save
                 else
                 {
                     console.log("token",this.token)
-                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/logout',{},{
+                    this.$http.post('http://localhost:4942/api/v2/users/logout',{},{
                         headers: {'X-Authorization': this.token}
                     })
                         .then(function (response) {
@@ -574,7 +650,7 @@ Apparently create a project changes didnt fucking save
             getSingleProject: function(id){
                 console.log(id);
                 this.currentId = id;
-                this.$http.get('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/' + id)
+                this.$http.get('http://localhost:4942/api/v2/projects/' + id)
                     .then((response) => {
 
                         this.currentProject = response.data;
@@ -598,10 +674,6 @@ Apparently create a project changes didnt fucking save
                         this.error = error;
                         this.errorFlag = true;
                     });
-
-
-
-
             },
 
             pledgeToProject: function(amount){
@@ -614,7 +686,7 @@ Apparently create a project changes didnt fucking save
                 else
                 {
                     console.log(this.currentProject.id)
-                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/' + this.currentProject.id + '/pledge', {
+                    this.$http.post('http://localhost:4942/api/v2/projects/' + this.currentProject.id + '/pledge', {
                         "id": this.currentUserId,
                         "amount": parseInt(amount),
                         "anonymous": anonymous,
@@ -637,6 +709,7 @@ Apparently create a project changes didnt fucking save
                 console.log("token", this.token);
                 console.log(this.message);
                 console.log(this.searchParameter);
+                this.getMyBackedProjects();
 
             },
 
