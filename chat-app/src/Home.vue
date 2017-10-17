@@ -103,7 +103,7 @@ Apparently create a project changes didnt fucking save
                                 </b-row>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" v-on:click="createUser()" data-dismiss="modal">Submit</button>
+                                <button type="button" class="btn btn-primary" v-on:click="createUser()" data-dismiss="modal">Submit</button>
                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">
                                     Close
                                 </button>
@@ -164,6 +164,17 @@ Apparently create a project changes didnt fucking save
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-body">
+
+                                <div v-if="userIsCreator()">
+                                    <b-btn v-b-toggle.collapse1 variant="danger" v-on:click="closeProject()" data-dismiss="modal">CLOSE THIS PROJECT </b-btn>
+                                    <b-collapse id="collapse1" class="mt-2">
+
+
+                                    </b-collapse>
+
+                                </div>
+
+
                                 <div id = "project">
                                     <h1>{{currentProject.title}}</h1>
                                     <b-img center rounded :src="'http://localhost:4942/api/v2' + currentProject.imageUri" alt="Responsive image" fluid-grow class="Image"/>
@@ -305,7 +316,7 @@ Apparently create a project changes didnt fucking save
                         </b-row>
                         <b-row class="my-1">
                             <b-col sm="2">Image:</b-col>
-                            <b-col><b-form-file id="file_input1" accept=".jpg, .png"> v-model="projectCreationForm.image"></b-form-file></b-col>
+                            <b-col><b-form-file id="file_input1" accept=".jpg, .png" v-model="projectCreationForm.image"></b-form-file></b-col>
                         </b-row>
                         <div>
 
@@ -387,6 +398,7 @@ Apparently create a project changes didnt fucking save
                                         </button>
 
 
+
                                     </b-card>
                         </div>
                     </b-card-group>
@@ -436,7 +448,7 @@ Apparently create a project changes didnt fucking save
                     rewards: [],
                     tempAmount: '',
                     tempReward: '',
-                    image: ''
+                    image: null
                 }
             }
         },
@@ -563,7 +575,24 @@ Apparently create a project changes didnt fucking save
 
                 }
             },
+
+            closeProject: function(){
+                this.$http.put('http://localhost:4942/api/v2/projects/' + this.currentProject.id, {
+                    "open": false
+            },{
+                    headers: {'X-Authorization': this.token}
+                }).then(function (response) {
+                    this.getProjects();
+
+                }, function (error) {
+                    this.error = error;
+                    this.errorFlag = true;
+                });
+            },
+
             createProject: function(){
+                console.log("outer this", this);
+                console.log("outer this", this);
                 if(false){
 
                 }
@@ -580,8 +609,25 @@ Apparently create a project changes didnt fucking save
                         headers: {'X-Authorization': this.token}
                     })
                         .then((response) => {
-                            this.getProjects();
-                            this.projectCreationForm = {
+                            console.log("inner this", this);
+                            console.log("token", this.token);
+                            console.log("type", this.projectCreationForm.image.type);
+                            let options = {headers: {
+                                'X-Authorization': this.token,
+                                'Content-Type': this.projectCreationForm.image.type
+                            }};
+                            console.log("lol", response.data.id);
+                            this.$http.put('http://localhost:4942/api/v2/projects/' + response.data.id + '/image', this.projectCreationForm.image, options)
+                            .then(function (response2) {
+                                console.log("inner");
+
+
+
+                            }, function (error) {
+                                this.error = error;
+                            });
+
+                            this.projectCreationForm ={
                                 title: '',
                                 numberRewards: 2,
                                 subtitle: '',
@@ -590,13 +636,31 @@ Apparently create a project changes didnt fucking save
                                 rewards: [],
                                 tempAmount: '',
                                 tempReward: '',
+                                image: null
                             };
+
+                            this.getProjects();
+
+
 //                            console.log(response.body.id)
 //                            this.$http.put('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/projects/' + response.body.id + '/image', {
 //                            {this.projectCreationForm.image}
 //                            }                    }, (error) => {
 //                            this.error = error;
 //                            this.errorFlag = true;
+
+//                            this.$http.put('http://csse-s365.canterbury.ac.nz:4942/api/v2/users/projects/' + response.body.id + '/image', {
+//                            "file": this.projectCreationForm.image
+//                            }, {
+//                                headers: {
+//                                    'Content-Type': 'multipart/form-data'
+//                                }})
+//                                .then(function (response) {
+//
+//                                }, function (error) {
+//                                    this.error = error;
+//                                    this.errorFlag = true;
+//                                });
                         });
 
                 }
@@ -610,6 +674,7 @@ Apparently create a project changes didnt fucking save
                             this.currentUserId = response.body.id;
 
                         }, function (error) {
+                            alert("Unknown Username/Email/Password combination, please try again");
                             this.error = error;
                         });
 
@@ -624,6 +689,7 @@ Apparently create a project changes didnt fucking save
                             this.token = response.body.token;
                             this.currentUserId = response.body.id;
                         }, function (error) {
+                            alert("Unknown Username/Email/Password combination, please try again");
                             this.error = error;
                         });
                 }
@@ -703,12 +769,21 @@ Apparently create a project changes didnt fucking save
                         });
                 }
             },
+            userIsCreator: function () {
+                for(var i = 0; i< this.currentProject.creators.length; i++) {
+                    if (this.currentProject.creators[i].id == this.currentUserId) {
+                        return true
+                    }
+                }
 
+                return false
+            },
             test: function () {
                 console.log(this.currentProject);
                 console.log("token", this.token);
                 console.log(this.message);
                 console.log(this.searchParameter);
+                console.log("image", this.projectCreationForm.image);
                 this.getMyBackedProjects();
 
             },
