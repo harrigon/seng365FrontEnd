@@ -21,7 +21,7 @@ Apparently create a project changes didnt fucking save
 
                 <nav class="navbar fixed-top navbar-toggleable-md navbar-light bg-white">
 
-                    <a class="navbar-brand" href="http://localhost:8080">Crowderino Funderino</a>
+                    <a class="navbar-brand" href="http://csse-s365.canterbury.ac.nz:4851">Crowderino Funderino</a>
 
                     <div v-if="token==''">
                         <button type="button" class="btn text-left btn-primary" data-toggle="modal"
@@ -38,7 +38,7 @@ Apparently create a project changes didnt fucking save
                             Create a Project
                         </button>
 
-                        <b-dropdown id="ddown1" text="Refine Projects" variant="primary" class="m-md-2">
+                        <b-dropdown id="ddown1" text="Filter Projects" variant="primary" class="m-md-2">
                             <b-dropdown-item aria-describedby="All Projects" v-on:click="getProjects()">All Projects</b-dropdown-item>
                             <b-dropdown-item aria-describedby="Projects I Back" v-on:click="getMyBackedProjects()" >Backed Projects</b-dropdown-item>
                             <b-dropdown-item aria-describedby="Projects I Back" v-on:click="getMyCreatedProjects()" >Created Projects</b-dropdown-item>
@@ -164,33 +164,32 @@ Apparently create a project changes didnt fucking save
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-body">
-
-                                <div v-if="userIsCreator()">
+                                <div v-if="currentProject.open === false">
+                                    <h4 style="color: red">CLOSED PROJECT</h4>
+                                </div>
+                                <div v-else-if="userIsCreator()">
                                     <b-btn v-b-toggle.collapse1 variant="danger" v-on:click="closeProject()" data-dismiss="modal">CLOSE THIS PROJECT </b-btn>
-                                    <b-collapse id="collapse1" class="mt-2">
-
-
-                                    </b-collapse>
-
+                                    <b-col><b-form-file id="file_input1" accept=".jpg, .png" v-model="projectCreationForm.image"></b-form-file></b-col>
+                                    <b-btn variant="primary" v-on:click="updateImage">Update Image</b-btn>
                                 </div>
 
 
                                 <div id = "project">
                                     <h1>{{currentProject.title}}</h1>
-                                    <b-img center rounded :src="'http://localhost:4942/api/v2' + currentProject.imageUri" alt="Responsive image" fluid-grow class="Image"/>
+                                    <b-img center rounded :src="'http://csse-s365.canterbury.ac.nz:4851/api/v2' + currentProject.imageUri + '?time=' + Date.now() " alt="Responsive image" fluid-grow class="Image"/>
                                     <h4>{{currentProject.subtitle}}</h4>
                                     <p> Creation Date {{getCurrentProjectDate()}}<br /> Creators : {{currentProject.creators[0].username}} <br /> Target: {{currentProject.target}}</p>
                                     <p>{{currentProject.description}}</p>
-                                    <p>Progress: {{totalDonations}}/{{currentProject.target}} <br /> Total Backers: {{totalBackers}}</p>
-                                    <table style="border: 2px solid black">
+                                    <p>Progress: {{totalDonations/100}}/{{currentProject.target}} <br /> Total Backers: {{totalBackers}}</p>
+                                    <table style="border: 2px solid black; margin:auto; width:100%">
                                         <tr style="border: 2px solid black">
-                                            <th>Reward</th>
+                                            <th>Reward Description</th>
                                             <th>Amount</th>
                                         </tr>
 
-                                        <tr v-for="reward in currentProject.rewards" style="border: 1px solid black">
+                                        <tr v-for="reward in currentProject.rewards" style="border: 1px solid black; margin:auto;">
                                             <td>{{reward.description}}</td>
-                                            <td>{{reward.amount/100}}</td>
+                                            <td>${{reward.amount/100}}</td>
                                         </tr>
                                     </table>
                                     <div v-if="token==''">
@@ -199,12 +198,12 @@ Apparently create a project changes didnt fucking save
                                     <div v-else>
 
                                         <b-row class="my-1">
-                                            <b-col sm="2">
-                                                <button type="button" class="btn btn-primary" v-on:click="pledgeToProject(pledgeValue)" data-dismiss="modal" data-toggle="modal" data-target="#successfulDonationModal">
-                                                Pledge
+                                            <b-col sm="3">
+                                                <button type="button" class="btn btn-primary" v-on:click="pledgeToProject(pledgeValue)" data-dismiss="modal">
+                                                Pledge ($)
                                                 </button>
                                             </b-col>
-                                            <b-col sm="5">
+                                            <b-col sm="4">
                                                 <b-form-input id="input-small" size="sm" type="number" placeholder="5.00" v-model="pledgeValue" required></b-form-input>
                                             </b-col>
                                             <b-col sm="5">
@@ -226,11 +225,11 @@ Apparently create a project changes didnt fucking save
 
                                         <tr v-for="backer in mostRecentBackers" style="border: 1px solid black">
                                             <td>{{backer.username}}</td>
-                                            <td>{{backer.amount}}</td>
+                                            <td>${{backer.amount/100}}</td>
                                         </tr>
                                         <tr>
                                             <th>Anonymous</th>
-                                            <td>{{anonymousDonations}}</td>
+                                            <td>${{anonymousDonations/100}}</td>
                                         </tr>
                                     </table>
 
@@ -333,7 +332,7 @@ Apparently create a project changes didnt fucking save
                                     <b-row class="my-1">
                                         <b-col sm="2"><label for="input-small">Amount:</label></b-col>
                                         <b-col sm="10">
-                                            <b-form-input id="input-small" size="sm" type="number" placeholder="Amount" v-model="projectCreationForm.tempAmount" required></b-form-input>
+                                            <b-form-input id="input-small" size="sm" type="number" placeholder="5.00" v-model="projectCreationForm.tempAmount" required></b-form-input>
                                         </b-col>
                                     </b-row>
                                     <b-btn v-b-toggle.collapse1 variant="primary" v-b-toggle.collapse1_inner v-on:click="addReward()">Submit Reward </b-btn>
@@ -349,7 +348,7 @@ Apparently create a project changes didnt fucking save
                         </tr>
                             <tr v-for="reward in projectCreationForm.rewards"style="border: 1px solid black">
                             <td>{{reward.description}}</td>
-                            <td>{{reward.amount}}</td>
+                            <td>${{reward.amount}}</td>
                             </tr>
                         </table>
 
@@ -380,7 +379,7 @@ Apparently create a project changes didnt fucking save
 
                                     <b-card :header="project.title"
                                             header-text-variant="dark"
-                                            :img-src="'http://localhost:4942/api/v2' + project.imageUri"
+                                            :img-src="'http://csse-s365.canterbury.ac.nz:4851/api/v2' + project.imageUri + '?time=' + Date.now()"
                                             img-alt="Image"
                                             img-fluid
                                             tag="article"
@@ -404,7 +403,6 @@ Apparently create a project changes didnt fucking save
                     </b-card-group>
                     </b-container>
                     </div>
-                <b-button  variant="dark" @click="test" >test</b-button>
 
 
             </div>
@@ -458,7 +456,7 @@ Apparently create a project changes didnt fucking save
 
         methods: {
             getProjects: function(){
-                this.$http.get('http://localhost:4942/api/v2/projects?open=true')
+                this.$http.get('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects?open=true')
                     .then(function(response){
                         this.projects = response.data;
                     }, function(error) {
@@ -467,7 +465,7 @@ Apparently create a project changes didnt fucking save
                     });
             },
             searchProjects: function(){
-                this.$http.get('http://localhost:4942/api/v2/projects?open=true')
+                this.$http.get('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects?open=true')
                     .then(function(response){
                         this.projects = [];
                         for(var i = 0; i <response.data.length; i++){
@@ -483,14 +481,14 @@ Apparently create a project changes didnt fucking save
                     });
             },
             getMyBackedProjects: function(){
-                this.$http.get('http://localhost:4942/api/v2/projects?open=true')
+                this.$http.get('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects')
                     .then(function(response){
                         this.projects = response.data;
                 var allProjects = this.projects;
                 this.projects = [];
                 for(var i = 0; i < allProjects.length; i++){
                     console.log("call");
-                    this.$http.get('http://localhost:4942/api/v2/projects/' + allProjects[i].id)
+                    this.$http.get('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/' + allProjects[i].id)
                         .then((response) => {
                         console.log(response.data.backers);
                         var tempProject = response.data;
@@ -498,6 +496,7 @@ Apparently create a project changes didnt fucking save
                                 console.log('final');
                                 console.log(tempProject.backers[j].id, this.currentUserId);
                                 if(tempProject.backers[j].id == this.currentUserId) {
+                                    if(this.projects.indexOf(tempProject))
                                     this.projects.push(tempProject);
                                     console.log("PUSHED")
                                 }
@@ -513,14 +512,14 @@ Apparently create a project changes didnt fucking save
                     });
             },
             getMyCreatedProjects: function(){
-                this.$http.get('http://localhost:4942/api/v2/projects?open=true')
+                this.$http.get('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects')
                     .then(function(response){
                             this.projects = response.data;
                 var allProjects = this.projects;
                 this.projects = [];
                 for(var i = 0; i < allProjects.length; i++){
                     console.log("call");
-                    this.$http.get('http://localhost:4942/api/v2/projects/' + allProjects[i].id)
+                    this.$http.get('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/' + allProjects[i].id)
                         .then((response) => {
                             console.log(response.data.backers);
                             var tempProject = response.data;
@@ -545,22 +544,33 @@ Apparently create a project changes didnt fucking save
             },
 
             createUser: function(){
-                if(false){
+                if(this.signUpForm.username == ''){
+                    alert("Please enter a valid username")
+                }
 
+                else if(this.signUpForm.email.indexOf("@") == -1){
+                    alert("Please enter a valid email")
+                }
+
+                else if(this.signUpForm.password == ''){
+                    alert("Please enter a valid password")
                 }
                 else
                 {
                     console.log("yo");
-                    this.$http.post('http://localhost:4942/api/v2/users/', {
+                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/', {
                         "username": this.signUpForm.username,
                         "email": this.signUpForm.email,
                         "password": this.signUpForm.password,
                         "location": this.signUpForm.location
                     })
                         .then(function (response) {
-                            this.$http.post('http://localhost:4942/api/v2/users/login?email=' + this.signUpForm.email +'&password=' + this.signUpForm.password, {
+                            console.log("logging in")
+                            this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/login?email=' + this.signUpForm.email +'&password=' + this.signUpForm.password, {
                             })
                                 .then(function (response2) {
+                                    console.log("logged in")
+                                    console.log(this.token);
                                     this.token = response2.body.token;
                                     this.currentUserId = response2.body.id;
 
@@ -569,7 +579,8 @@ Apparently create a project changes didnt fucking save
                                 });
                         }, function (error) {
                             this.error = error;
-                            this.errorFlag = true;
+                            console.log(error);
+                            alert("Error Signing up, please try again")
                         });
 
 
@@ -577,7 +588,7 @@ Apparently create a project changes didnt fucking save
             },
 
             closeProject: function(){
-                this.$http.put('http://localhost:4942/api/v2/projects/' + this.currentProject.id, {
+                this.$http.put('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/' + this.currentProject.id, {
                     "open": false
             },{
                     headers: {'X-Authorization': this.token}
@@ -591,14 +602,9 @@ Apparently create a project changes didnt fucking save
             },
 
             createProject: function(){
-                console.log("outer this", this);
-                console.log("outer this", this);
-                if(false){
+                if((isNaN(this.projectCreationForm.target) === false) && (this.projectCreationForm.target !== '')) {
 
-                }
-                else
-                {
-                    this.$http.post('http://localhost:4942/api/v2/projects/', {
+                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/', {
                         "title": this.projectCreationForm.title,
                         "description": this.projectCreationForm.description,
                         "subtitle": this.projectCreationForm.subtitle,
@@ -611,23 +617,26 @@ Apparently create a project changes didnt fucking save
                         .then((response) => {
                             console.log("inner this", this);
                             console.log("token", this.token);
-                            console.log("type", this.projectCreationForm.image.type);
-                            let options = {headers: {
-                                'X-Authorization': this.token,
-                                'Content-Type': this.projectCreationForm.image.type
-                            }};
+                            if (this.projectCreationForm.image != null) {
+                            let options = {
+                                headers: {
+                                    'X-Authorization': this.token,
+                                    'Content-Type': this.projectCreationForm.image.type
+                                }
+                            };
                             console.log("lol", response.data.id);
-                            this.$http.put('http://localhost:4942/api/v2/projects/' + response.data.id + '/image', this.projectCreationForm.image, options)
-                            .then(function (response2) {
-                                console.log("inner");
+                                this.$http.put('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/' + response.data.id + '/image', this.projectCreationForm.image, options)
+                                    .then(function (response2) {
+                                        console.log("inner");
 
 
+                                    }, function (error) {
+                                        alert("Error with image upload")
+                                        this.error = error;
+                                    });
+                            }
 
-                            }, function (error) {
-                                this.error = error;
-                            });
-
-                            this.projectCreationForm ={
+                            this.projectCreationForm = {
                                 title: '',
                                 numberRewards: 2,
                                 subtitle: '',
@@ -636,62 +645,80 @@ Apparently create a project changes didnt fucking save
                                 rewards: [],
                                 tempAmount: '',
                                 tempReward: '',
+                                closed: '',
                                 image: null
                             };
 
                             this.getProjects();
 
+                        }, function (error) {
+                                console.log("ERROR")
+                                alert("Error Creating Project, please try again");
+                                this.error = error;
 
-//                            console.log(response.body.id)
-//                            this.$http.put('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/projects/' + response.body.id + '/image', {
-//                            {this.projectCreationForm.image}
-//                            }                    }, (error) => {
-//                            this.error = error;
-//                            this.errorFlag = true;
-
-//                            this.$http.put('http://csse-s365.canterbury.ac.nz:4942/api/v2/users/projects/' + response.body.id + '/image', {
-//                            "file": this.projectCreationForm.image
-//                            }, {
-//                                headers: {
-//                                    'Content-Type': 'multipart/form-data'
-//                                }})
-//                                .then(function (response) {
-//
-//                                }, function (error) {
-//                                    this.error = error;
-//                                    this.errorFlag = true;
-//                                });
                         });
 
+                }
+                else {
+                    alert("Please enter a valid target")
                 }
             },
+
+            updateImage: function(){
+
+                let options = {
+                    headers: {
+                        'X-Authorization': this.token,
+                        'Content-Type': this.projectCreationForm.image.type,
+                    }
+                };
+
+                this.$http.put('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/' + this.currentProject.id + '/image' , this.projectCreationForm.image, options)
+                    .then(function (response2) {
+                        console.log("inner");
+                        this.getProjects();
+                        this.getSingleProject(this.currentProject.id)
+                        this.projectCreationForm.image = null;
+
+
+                    }, function (error) {
+                        alert("Error with image upload")
+                        this.error = error;
+                    });
+
+
+            },
             logInUser: function(){
-                if(this.logInForm.username == ''){
-                    this.$http.post('http://localhost:4942/api/v2/users/login?email=' + this.logInForm.email +'&password=' + this.logInForm.password, {
+                console.log("username", this.logInForm.username)
+                console.log("password", this.logInForm.password)
+                console.log("email", this.logInForm.email)
+
+                if(this.logInForm.username != ''){
+                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/login?username=' + this.logInForm.username +'&password=' + this.logInForm.password, {
                     })
                         .then(function (response) {
+                            console.log("login response", response)
                             this.token = response.body.token;
                             this.currentUserId = response.body.id;
-
                         }, function (error) {
                             alert("Unknown Username/Email/Password combination, please try again");
+                            console.log(error);
                             this.error = error;
                         });
-
-
                 }
-                else
-                {
-                    this.$http.post('http://localhost:4942/api/v2/users/login?username=' + this.logInForm.username +'&password=' + this.logInForm.password, {
+                else{
+                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/login?email=' + this.logInForm.email +'&password=' + this.logInForm.password, {
                     })
                         .then(function (response) {
-                            console.log(response)
                             this.token = response.body.token;
                             this.currentUserId = response.body.id;
+
                         }, function (error) {
-                            alert("Unknown Username/Email/Password combination, please try again");
+                            alert("Unknown Email/Username/Password combination, please try again");
                             this.error = error;
                         });
+
+
                 }
             },
             logOut: function(){
@@ -702,7 +729,7 @@ Apparently create a project changes didnt fucking save
                 else
                 {
                     console.log("token",this.token)
-                    this.$http.post('http://localhost:4942/api/v2/users/logout',{},{
+                    this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/users/logout',{},{
                         headers: {'X-Authorization': this.token}
                     })
                         .then(function (response) {
@@ -716,10 +743,11 @@ Apparently create a project changes didnt fucking save
             getSingleProject: function(id){
                 console.log(id);
                 this.currentId = id;
-                this.$http.get('http://localhost:4942/api/v2/projects/' + id)
+                this.$http.get('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/' + id)
                     .then((response) => {
 
                         this.currentProject = response.data;
+                        console.log(response.data);
                         var count = 0;
                         this.mostRecentBackers = [];
                         this.anonymousDonations = 0;
@@ -743,30 +771,40 @@ Apparently create a project changes didnt fucking save
             },
 
             pledgeToProject: function(amount){
-                let anonymous = '';
-                if(this.anonymousDonation == "true"){anonymous = true;}
-                else{anonymous = false;}
-                if(false){
+                if(this.currentProject.creators[0].id !== this.currentUserId) {
+                    let anonymous = '';
+                    if (this.anonymousDonation == "true") {
+                        anonymous = true;
+                    }
+                    else {
+                        anonymous = false;
+                    }
+                    if (false) {
 
+                    }
+                    else {
+                        console.log(this.currentProject.id)
+                        this.$http.post('http://csse-s365.canterbury.ac.nz:4851/api/v2/projects/' + this.currentProject.id + '/pledge', {
+                            "id": this.currentUserId,
+                            "amount": parseInt(amount * 100),
+                            "anonymous": anonymous,
+                            "card": {
+                                "authToken": "Thisdoesntevenmatter"
+                            }
+                        }, {
+                            headers: {'X-Authorization': this.token}
+                        })
+                            .then(function (response) {
+                                console.log(response)
+                                alert("Successful Donation! Thank you for contributing")
+                            }, function (error) {
+                                alert("Error: Unable to pledge to a closed project.")
+                                this.error = error;
+                            });
+                    }
                 }
-                else
-                {
-                    console.log(this.currentProject.id)
-                    this.$http.post('http://localhost:4942/api/v2/projects/' + this.currentProject.id + '/pledge', {
-                        "id": this.currentUserId,
-                        "amount": parseInt(amount),
-                        "anonymous": anonymous,
-                        "card": {
-                            "authToken": "Thisdoesntevenmatter"
-                        }
-                    },{
-                        headers: {'X-Authorization': this.token}
-                    })
-                        .then(function (response) {
-                            console.log(response)
-                        }, function (error) {
-                            this.error = error;
-                        });
+                else{
+                    alert("Error: Cannot pledge to own project")
                 }
             },
             userIsCreator: function () {
@@ -789,15 +827,30 @@ Apparently create a project changes didnt fucking save
             },
 
             addReward: function(){
-              this.projectCreationForm.rewards.push({
-                  "amount": parseInt(this.projectCreationForm.tempAmount),
-                  "description": this.projectCreationForm.tempReward
-              });
+
+                if((isNaN(this.projectCreationForm.tempAmount) === false) && (this.projectCreationForm.tempAmount !== '')) {
+
+                    this.projectCreationForm.rewards.push({
+                        "amount": parseInt(this.projectCreationForm.tempAmount),
+                        "description": this.projectCreationForm.tempReward
+                    });
+                }
+                else{
+                    console.log("REWARD AMOUNT ERROR")
+                    alert("Reward Amount must be a number!")
+                }
             },
 
 
             getCurrentProjectDate: function(){
-                return new Date(this.currentProject.creationDate)
+                var monthNames = [
+                    "January", "February", "March",
+                    "April", "May", "June", "July",
+                    "August", "September", "October",
+                    "November", "December"
+                ];
+               var date = new Date(this.currentProject.creationDate);
+               return date.getDate() + ' ' + monthNames[date.getMonth()] + ' ' + date.getFullYear()
             },
 
 
